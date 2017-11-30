@@ -100,9 +100,15 @@ void name_joints(trajectory_msgs::JointTrajectory & _cmd, int _nj){
 
 // loads the joint space points to be sent as a command to the robot
 void eval_points(trajectory_msgs::JointTrajectoryPoint & _point, KDL::JntArray & _jointpositions, int _nj){
-	for (int i = 0; i < _nj; ++i)
+	// joints can move between -+: 172,120,172,120,172,120,170
+	//double joint_bounds[] = {3.002, 2.0944,3.002, 2.0944,3.002, 2.0944, 3.002};
+	for (int i = 0; i < _nj; ++i){
+		 while(_jointpositions(i) > M_PI)
+				_jointpositions(i) -= 2*M_PI;
+		 while(_jointpositions(i) < -M_PI)
+				_jointpositions(i) += 2*M_PI;
 		_point.positions[i] = _jointpositions(i);
-		
+	}	
 }
 
 // read the reference trajectory from the reflexxes node e.g. ref xyz-rpy
@@ -121,7 +127,7 @@ int main(int argc, char * argv[]){
 	KDL::ChainFkSolverPos_recursive fksolver = KDL::ChainFkSolverPos_recursive(chain);
 	// define the inverse kinematics solver
 	KDL::ChainIkSolverVel_pinv iksolverv = KDL::ChainIkSolverVel_pinv(chain);//Inverse velocity solver
-	KDL::ChainIkSolverPos_NR iksolver(chain,fksolver,iksolverv,100,1e-6);//Maximum 100 iterations, stop at accuracy 1e-6
+	KDL::ChainIkSolverPos_NR iksolver(chain,fksolver,iksolverv,100,1e-4);//Maximum 100 iterations, stop at accuracy 1e-6
 
 	// get the number of joints from the chain
 	unsigned int nj = chain.getNrOfJoints();
@@ -139,7 +145,7 @@ int main(int argc, char * argv[]){
 
 	trajectory_msgs::JointTrajectory joint_cmd;
 	trajectory_msgs::JointTrajectoryPoint pt,pt2;
-    iiwa_msgs::JointPosition real_cmd;
+
 	initialize_points(pt,nj,0.0);
 	initialize_points(pt2,nj,0.0);
 	
@@ -174,8 +180,7 @@ int main(int argc, char * argv[]){
 	
 	// defining the puilsher that accepts joint position commands and applies them to the simulator
 	ros::Publisher cmd_pub = nh_.advertise<trajectory_msgs::JointTrajectory>("iiwa/PositionJointInterface_trajectory_controller/command",10);
-	// defining the puilsher that accepts joint position commands and applies them to the real kuka arm
-	ros::Publisher real_cmd_pub = nh_.advertise<iiwa_msgs::JointPosition>("/iiwa/command/JointPosition",10);
+
 
 	// debugging publishers
 	ros::Publisher xyzrpy_pub = nh_.advertise<geometry_msgs::Twist>("/robot/worldpos",10);
@@ -208,6 +213,13 @@ int main(int argc, char * argv[]){
 		cartpos.p[1]=y;
 		cartpos.p[2]=z;
 		cartpos.M = rpy;
+		jointpositions(0)= -1.3;
+		jointpositions(1)=  0.0;
+		jointpositions(2)=  0.0;
+		jointpositions(3)= -1.57;
+		jointpositions(4)=  0.0;
+		jointpositions(5)= 1.57;
+		jointpositions(6)= 0.0;
 		int ret = iksolver.CartToJnt(jointpositions,cartpos,jointpositions_new);
 		// get the target point ready after the inverse kinmatics is solved
 		eval_points(pt, jointpositions_new, nj);
@@ -221,7 +233,7 @@ int main(int argc, char * argv[]){
 
 	joint_cmd.points.push_back(pt);
 	//cmd.points.push_back(pt2);
-    bool real_robot = false;
+
 	while(ros::ok()){		
 		if (initialized){
 			// update the joint positions with the most recent readings from the joints
@@ -255,12 +267,6 @@ int main(int argc, char * argv[]){
 			joint_cmd.header.stamp = ros::Time::now();
 			cmd_pub.publish(joint_cmd);
 			xyzrpy_pub.publish(xyz);			
-		}
-		if(real_robot){
-			real_cmd.header.stamp = ros::Time::now();
-			real_cmd.position.a1 = -0.5;
-			real_cmd.position.a2 = 0.9;
-			real_cmd_pub.publish(real_cmd);
 		}
 		loop_rate.sleep();
 		ros::spinOnce();
