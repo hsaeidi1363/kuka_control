@@ -16,6 +16,7 @@ find_package(catkin REQUIRED COMPONENTS
 )
 find_package( Eigen3 REQUIRED )
 find_package( orocos_kdl REQUIRED )
+find_package(OpenCV REQUIRED)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -193,7 +194,7 @@ add_executable(kuka_control_cartesian src/cartesian.cpp)
 target_link_libraries(kuka_control_cartesian ${catkin_LIBRARIES})
 
 add_executable(kuka_control_planning src/planning.cpp)
-target_link_libraries(kuka_control_planning ${catkin_LIBRARIES})
+target_link_libraries(kuka_control_planning ${catkin_LIBRARIES} ${OpenCV_LIBS})
 
 add_executable(kuka_control_trajectory src/trajectory.cpp)
 target_link_libraries(kuka_control_trajectory ${catkin_LIBRARIES})

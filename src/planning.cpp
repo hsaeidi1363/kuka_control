@@ -2,10 +2,16 @@
 #include<ros/package.h>
 #include<fstream>
 #include<iostream>
+#include <opencv2/calib3d/calib3d.hpp>
+#include <opencv2/opencv.hpp>
+#include<opencv2/imgproc/imgproc.hpp>
+#include<opencv2/highgui/highgui.hpp>
+#include <opencv2/calib3d/calib3d.hpp>
 #include<trajectory_msgs/JointTrajectory.h> 
 #include<trajectory_msgs/JointTrajectoryPoint.h> 
 
 using namespace std;
+using namespace cv;
 void check_files(ifstream& in_file,string& in_name){
 	if(!in_file.is_open()){
 		cerr<< "Cannot open trajectory file"<< in_name<< endl;
@@ -21,6 +27,17 @@ int main(int argc, char * argv[]){
 	ros::init(argc,argv,"planning");
 	ros::NodeHandle nh_;
 	ros::NodeHandle home("~");
+	
+	bool offline_homography = false;
+	home.getParam("offline_homography", offline_homography);
+
+	string H_file = "/homography/H.yml";
+	H_file = ros::package::getPath("iros18_vision")+H_file;
+    FileStorage fs(H_file.c_str(), FileStorage::READ);
+
+	Mat offline_H;
+	fs["Homography"] >> offline_H;
+
 
 	int loop_frequency = 10;
 	ros::Rate loop_rate(loop_frequency);	
@@ -44,6 +61,7 @@ int main(int argc, char * argv[]){
 	int ctr = 0;
 	while(getline(plan_file, line)){
 		istringstream iss(line);
+		
 		if (ctr == 0){
 			double dump;
 			for (int i = 0; i < 18; ++i)
@@ -60,6 +78,18 @@ int main(int argc, char * argv[]){
 			for (int i = 0; i < 6; ++i)
 				iss >> point.accelerations[i];
 			// for now we do not specify durations
+
+			if(offline_homography){		
+				vector<Point2f> scene_wps;
+				vector<Point2f> way_point;
+				Point2f tmp;
+				tmp.x = point.positions[0];
+				tmp.y = point.positions[1];
+				way_point.push_back(tmp);
+				perspectiveTransform( way_point, scene_wps, offline_H);
+				point.positions[0] = scene_wps[0].x;
+				point.positions[1] = scene_wps[0].y;
+			}	
 			plan.points.push_back(point);
 		}
 	}
