@@ -152,10 +152,12 @@ int main(int argc, char * argv[]){
 	ros::NodeHandle home("~");
 	bool manual = true;
 	bool reflexx = false;
+	bool semi_auto = false;
 	double roll, pitch, yaw, x, y, z;
 	home.getParam("reflexx",reflexx);
 	// in the manual mode, joint angle commands are directly sent to each joint of the robot
 	home.getParam("manual",manual);
+	home.getParam("semi_auto", semi_auto);
 	for (int i = 0; i < nj; ++i){
 		std::ostringstream joint_name;		
 		joint_name << "j";
@@ -178,8 +180,12 @@ int main(int argc, char * argv[]){
 	ros::Rate loop_rate(loop_freq);
 
 	
-	// defining the puilsher that accepts joint position commands and applies them to the simulator
-	ros::Publisher cmd_pub = nh_.advertise<trajectory_msgs::JointTrajectory>("iiwa/PositionJointInterface_trajectory_controller/command",10);
+	// defining the publisher that accepts joint position commands and applies them to the simulator
+	std::string command_topic = "iiwa/PositionJointInterface_trajectory_controller/command";
+	if(semi_auto)
+		command_topic = "iiwa/auto/command";
+	
+	ros::Publisher cmd_pub = nh_.advertise<trajectory_msgs::JointTrajectory>(command_topic,10);
 
 
 	// debugging publishers
