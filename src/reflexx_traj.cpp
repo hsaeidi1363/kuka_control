@@ -42,7 +42,7 @@
 #include <stdlib.h>
 #include <geometry_msgs/Twist.h>
 #include<trajectory_msgs/JointTrajectory.h> 
-
+#include<std_msgs/UInt8.h>
 
 #include <ReflexxesAPI.h>
 #include <RMLPositionFlags.h>
@@ -75,6 +75,7 @@ int number_of_points = 0;
 
 
 geometry_msgs::Twist rob_pos;
+int control_mode = 1;
 
 void get_pos(const geometry_msgs::Twist & _data){
 	rob_pos = _data;
@@ -86,6 +87,12 @@ void get_plan(const trajectory_msgs::JointTrajectory & _data){
 	plan_available = true;
 	number_of_points = plan.points.size();
 }
+
+void get_mode(const std_msgs::UInt8 & _data){
+	control_mode = _data.data;
+
+}
+
 void initialize_plan(RMLPositionInputParameters  *_IP){
 		_IP->CurrentPositionVector->VecData      [0] =    plan.points[0].positions[0]	;
 		_IP->CurrentPositionVector->VecData      [1] =    plan.points[0].positions[1]   ;
@@ -163,19 +170,19 @@ int main(int argc, char * argv[])
 
     ros::init(argc,argv,"reflexx_traj");
     ros::NodeHandle nh_;
-	ros::NodeHandle home("~");
+    ros::NodeHandle home("~");
 
 
-	bool external_plan = false;
-	home.getParam("external_plan",external_plan);
+    bool external_plan = false;
+    home.getParam("external_plan",external_plan);
 
-	int loop_freq = 10;
+    int loop_freq = 10;
     float dt = (float) 1/loop_freq;
     ros::Rate loop_rate(loop_freq);
     ros::Publisher reflexxes_pub = nh_.advertise<geometry_msgs::Twist>("/reftraj",1);
-	
-	ros::Subscriber plan_sub = nh_.subscribe("/plan",1,get_plan);
-	ros::Subscriber pos_sub = nh_.subscribe("/robot/worldpos/" ,1, get_pos);
+    ros::Subscriber plan_sub = nh_.subscribe("/plan",1,get_plan);
+    ros::Subscriber pos_sub = nh_.subscribe("/robot/worldpos/" ,1, get_pos);
+    ros::Subscriber control_mode_sub = nh_.subscribe("/iiwa/control_mode" ,1, get_mode);
 
 
     geometry_msgs::Twist ref;
@@ -327,12 +334,17 @@ int main(int argc, char * argv[])
 			}
 			if (ResultValue == ReflexxesAPI::RML_FINAL_STATE_REACHED && external_plan){
 				//setting the target velcoity and positions
-				IP->TargetPositionVector->VecData       [0] =   plan.points[ctr % number_of_points].positions[0]      ;
-				IP->TargetPositionVector->VecData       [1] =   plan.points[ctr % number_of_points].positions[1]     ;
-				IP->TargetPositionVector->VecData       [2] =   plan.points[ctr % number_of_points].positions[2]     ;
-				IP->TargetPositionVector->VecData       [3] =   plan.points[ctr % number_of_points].positions[3]      ;
-				IP->TargetPositionVector->VecData       [4] =   plan.points[ctr % number_of_points].positions[4]      ;
-				IP->TargetPositionVector->VecData       [5] =   plan.points[ctr % number_of_points].positions[5]     ;
+				int next_wp;
+				if(control_mode == 0)
+					next_wp = 1;
+				else
+					next_wp = ctr % number_of_points;
+				IP->TargetPositionVector->VecData       [0] =   plan.points[next_wp].positions[0]      ;
+				IP->TargetPositionVector->VecData       [1] =   plan.points[next_wp].positions[1]     ;
+				IP->TargetPositionVector->VecData       [2] =   plan.points[next_wp].positions[2]     ;
+				IP->TargetPositionVector->VecData       [3] =   plan.points[next_wp].positions[3]      ;
+				IP->TargetPositionVector->VecData       [4] =   plan.points[next_wp].positions[4]      ;
+				IP->TargetPositionVector->VecData       [5] =   plan.points[next_wp].positions[5]     ;
 
 				if (rob_pos_received){
 					IP->CurrentPositionVector->VecData[0] = rob_pos.linear.x;
