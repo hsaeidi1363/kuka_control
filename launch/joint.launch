@@ -2,7 +2,7 @@
 	<node name="joint_controller" pkg="kuka_control" type="kuka_control_joint">
 		<param name="reflexx" value="true"/>		
 		<param name="manual" value="false"/>	
-		<param name="semi_auto" value="true"/>	
+		<param name="semi_auto" value="false"/>	
 		<param name="j1" value="-1.3"/>	
 		<param name="j2" value="0.0"/>	
 		<param name="j3" value="0"/>	
@@ -10,17 +10,17 @@
 		<param name="j5" value="0"/>	
 		<param name="j6" value="1.57"/>	
 		<param name="j7" value="0.0"/>	
-		<param name="roll" value="3.1414"/>
-		<param name="pitch" value="0.0015"/>
+		<param name="roll" value="3.1"/>
+		<param name="pitch" value="0.002"/>
 		<param name="yaw" value="1.8415"/>
 		<param name="x" value=" 0.01"/>
 		<param name="y" value="-0.54"/>
 		<param name="z" value="0.6143"/>
 	</node>
-	<!--node name="plan" pkg="kuka_control" type="kuka_control_planning">
-		<param name="plan_file_name" value="/trajs/plan5.txt"/>
+	<node name="plan" pkg="kuka_control" type="kuka_control_planning">
+		<param name="plan_file_name" value="/trajs/plan6.txt"/>
 		<param name ="offline_homography" value = "true"/>
-	</node-->	
+	</node>	
     <node name="ref_genXYZ" pkg = "kuka_control" type="kuka_control_reflexx_traj">
 		<param name="external_plan" value = "true"/>
 	</node>
