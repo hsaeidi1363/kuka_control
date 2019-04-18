@@ -17,7 +17,7 @@
 
 //Frame KDL::Frame::DH_Craig1989 (double a, double alpha, double d, double theta)
 
-KDL::Chain LWR(){
+/*KDL::Chain LWR(){
 
   KDL::Chain chain;
 
@@ -57,7 +57,53 @@ KDL::Frame::DH_Craig1989(0,0,0.12597,0)));
 
   return chain;
 
+}*/
+
+double needle_length = 0.0;
+
+KDL::Chain LWR(){
+
+  double tool_length = 0.01735;
+  double total_tool_length = tool_length + needle_length + 0.12597;//0.12597 m from joint to flange 
+
+  KDL::Chain chain;
+
+  //base
+  chain.addSegment(KDL::Segment(KDL::Joint(KDL::Joint::None),
+        KDL::Frame::DH_Craig1989(0,0,0.33989,0)));
+
+  //joint 1
+  chain.addSegment(KDL::Segment(KDL::Joint(KDL::Joint::RotZ),
+        KDL::Frame::DH_Craig1989(0, -M_PI_2,0,0)));
+
+  //joint 2 
+  chain.addSegment(KDL::Segment(KDL::Joint(KDL::Joint::RotZ),
+        KDL::Frame::DH_Craig1989(0,M_PI_2,0.40011,0)));
+
+  //joint 3
+  chain.addSegment(KDL::Segment(KDL::Joint(KDL::Joint::RotZ),
+        KDL::Frame::DH_Craig1989(0,M_PI_2,0,0)));
+
+  //joint 4
+  chain.addSegment(KDL::Segment(KDL::Joint(KDL::Joint::RotZ),
+        KDL::Frame::DH_Craig1989(0, -M_PI_2,0.40003,0)));
+
+  //joint 5
+  chain.addSegment(KDL::Segment(KDL::Joint(KDL::Joint::RotZ),
+        KDL::Frame::DH_Craig1989(0, -M_PI_2,0,0)));
+
+  //joint 6
+  chain.addSegment(KDL::Segment(KDL::Joint(KDL::Joint::RotZ),
+        KDL::Frame::DH_Craig1989(0, M_PI_2,0,0)));
+
+  //joint 7 (with flange adapter)
+  chain.addSegment(KDL::Segment(KDL::Joint(KDL::Joint::RotZ),
+  KDL::Frame::DH_Craig1989(0,0,total_tool_length,0)));
+
+  return chain;
+
 }
+
 
 //reading the kuka lwr joint positions
 sensor_msgs::JointState joints;
@@ -219,13 +265,21 @@ int main(int argc, char * argv[]){
 		cartpos.p[1]=y;
 		cartpos.p[2]=z;
 		cartpos.M = rpy;
-		jointpositions(0)= -1.3;
+		/*jointpositions(0)= -1.3;
 		jointpositions(1)=  0.0;
 		jointpositions(2)=  0.0;
 		jointpositions(3)= -1.57;
 		jointpositions(4)=  0.0;
 		jointpositions(5)= 1.57;
 		jointpositions(6)= 0.0;
+*/
+		jointpositions(0)= 0.68;
+		jointpositions(1)=  1.13;
+		jointpositions(2)=  -0.51;
+		jointpositions(3)= -1.61;
+		jointpositions(4)=  -1.27;
+		jointpositions(5)= 1.68;
+		jointpositions(6)= 1.01;
 		int ret = iksolver.CartToJnt(jointpositions,cartpos,jointpositions_new);
 		// get the target point ready after the inverse kinmatics is solved
 		eval_points(pt, jointpositions_new, nj);
