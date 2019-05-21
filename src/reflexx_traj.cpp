@@ -116,7 +116,6 @@ void initialize_plan(RMLPositionInputParameters  *_IP){
 		_IP->CurrentAccelerationVector->VecData  [5] =    plan.points[0].accelerations[5]      ;
 
 
-<<<<<<< HEAD
 		_IP->MaxVelocityVector->VecData          [0] =    0.1      ;
 		_IP->MaxVelocityVector->VecData          [1] =    0.1      ;
 		_IP->MaxVelocityVector->VecData          [2] =    0.1      ;
@@ -140,31 +139,6 @@ void initialize_plan(RMLPositionInputParameters  *_IP){
 		_IP->MaxJerkVector->VecData              [3] =    1.0      ;
 		_IP->MaxJerkVector->VecData              [4] =    1.0      ;
 		_IP->MaxJerkVector->VecData              [5] =    1.0      ;
-=======
-		_IP->MaxVelocityVector->VecData          [0] =    0.5      ;
-		_IP->MaxVelocityVector->VecData          [1] =    0.5      ;
-		_IP->MaxVelocityVector->VecData          [2] =    0.5      ;
-		_IP->MaxVelocityVector->VecData          [3] =    0.5      ;
-		_IP->MaxVelocityVector->VecData          [4] =    0.5      ;
-		_IP->MaxVelocityVector->VecData          [5] =    0.5      ;
-
-
-		_IP->MaxAccelerationVector->VecData      [0] =    2      ;
-		_IP->MaxAccelerationVector->VecData      [1] =    2      ;
-		_IP->MaxAccelerationVector->VecData      [2] =    2      ;
-		_IP->MaxAccelerationVector->VecData      [3] =    2      ;
-		_IP->MaxAccelerationVector->VecData      [4] =    2      ;
-		_IP->MaxAccelerationVector->VecData      [5] =    2      ;
-
-
-
-		_IP->MaxJerkVector->VecData              [0] =    2      ;
-		_IP->MaxJerkVector->VecData              [1] =    2      ;
-		_IP->MaxJerkVector->VecData              [2] =    2      ;
-		_IP->MaxJerkVector->VecData              [3] =    2      ;
-		_IP->MaxJerkVector->VecData              [4] =    2      ;
-		_IP->MaxJerkVector->VecData              [5] =    2      ;
->>>>>>> 3ccac1792ba5ef8d7dc099947fe3499e15d98e91
 
 		//setting the target velcoity and positions
 		_IP->TargetPositionVector->VecData       [0] =   plan.points[1].positions[0]     ;
@@ -288,7 +262,6 @@ int main(int argc, char * argv[])
 		IP->CurrentAccelerationVector->VecData  [5] =    0.0      ;
 
 
-<<<<<<< HEAD
 		IP->MaxVelocityVector->VecData          [0] =    0.1      ;
 		IP->MaxVelocityVector->VecData          [1] =    0.1      ;
 		IP->MaxVelocityVector->VecData          [2] =    0.1      ;
@@ -312,31 +285,6 @@ int main(int argc, char * argv[])
 		IP->MaxJerkVector->VecData              [3] =    1.0      ;
 		IP->MaxJerkVector->VecData              [4] =    1.0      ;
 		IP->MaxJerkVector->VecData              [5] =    1.0      ;
-=======
-		IP->MaxVelocityVector->VecData          [0] =    0.5      ;
-		IP->MaxVelocityVector->VecData          [1] =    0.5      ;
-		IP->MaxVelocityVector->VecData          [2] =    0.5      ;
-		IP->MaxVelocityVector->VecData          [3] =    0.5      ;
-		IP->MaxVelocityVector->VecData          [4] =    0.5      ;
-		IP->MaxVelocityVector->VecData          [5] =    0.5      ;
-
-
-		IP->MaxAccelerationVector->VecData      [0] =    2      ;
-		IP->MaxAccelerationVector->VecData      [1] =    2      ;
-		IP->MaxAccelerationVector->VecData      [2] =    2      ;
-		IP->MaxAccelerationVector->VecData      [3] =    2      ;
-		IP->MaxAccelerationVector->VecData      [4] =    2      ;
-		IP->MaxAccelerationVector->VecData      [5] =    2      ;
-
-
-
-		IP->MaxJerkVector->VecData              [0] =    2      ;
-		IP->MaxJerkVector->VecData              [1] =    2      ;
-		IP->MaxJerkVector->VecData              [2] =    2      ;
-		IP->MaxJerkVector->VecData              [3] =    2      ;
-		IP->MaxJerkVector->VecData              [4] =    2      ;
-		IP->MaxJerkVector->VecData              [5] =    2      ;
->>>>>>> 3ccac1792ba5ef8d7dc099947fe3499e15d98e91
 
 		//setting the target velcoity and positions
 		IP->TargetPositionVector->VecData       [0] =   0.2      ;
