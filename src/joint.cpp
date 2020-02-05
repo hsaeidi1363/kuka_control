@@ -63,7 +63,7 @@ double needle_length = 0.0;
 
 KDL::Chain LWR(){
 
-  double tool_length = 0.01735;
+  double tool_length = 0.504;//0.01735;
   double total_tool_length = tool_length + needle_length + 0.12597;//0.12597 m from joint to flange 
 
   KDL::Chain chain;
