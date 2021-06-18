@@ -13,10 +13,13 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   iiwa_msgs
   roslib
+  pcl_ros
 )
 find_package( Eigen3 REQUIRED )
 find_package( orocos_kdl REQUIRED )
 find_package(OpenCV REQUIRED)
+link_directories(${PCL_LIBRARY_DIRS})
+add_definitions(${PCL_DEFINITIONS})
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -118,7 +121,7 @@ catkin_package(
 ## Your package locations should be listed before other locations
 # include_directories(include)
 include_directories(
-  ${catkin_INCLUDE_DIRS} ${EIGEN3_INCLUDE_DIRS}
+  ${catkin_INCLUDE_DIRS} ${EIGEN3_INCLUDE_DIRS} ${PCL_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
@@ -194,7 +197,7 @@ add_executable(kuka_control_cartesian src/cartesian.cpp)
 target_link_libraries(kuka_control_cartesian ${catkin_LIBRARIES})
 
 add_executable(kuka_control_planning src/planning.cpp)
-target_link_libraries(kuka_control_planning ${catkin_LIBRARIES} ${OpenCV_LIBS})
+target_link_libraries(kuka_control_planning ${catkin_LIBRARIES} ${OpenCV_LIBS} ${PCL_LIBRARIES})
 
 add_executable(kuka_control_trajectory src/trajectory.cpp)
 target_link_libraries(kuka_control_trajectory ${catkin_LIBRARIES})

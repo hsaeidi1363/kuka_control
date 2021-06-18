@@ -9,6 +9,9 @@
 #include <opencv2/calib3d/calib3d.hpp>
 #include<trajectory_msgs/JointTrajectory.h> 
 #include<trajectory_msgs/JointTrajectoryPoint.h> 
+#include<pcl_ros/transforms.h>
+#include<pcl_ros/point_cloud.h>
+#include<pcl_conversions/pcl_conversions.h>
 
 using namespace std;
 using namespace cv;
@@ -31,18 +34,19 @@ int main(int argc, char * argv[]){
 	bool offline_homography = false;
 	home.getParam("offline_homography", offline_homography);
 
-	string H_file = "/homography/H.yml";
-	H_file = ros::package::getPath("iros18_vision")+H_file;
-    FileStorage fs(H_file.c_str(), FileStorage::READ);
+	//string H_file = "/homography/H.yml";
+	//H_file = ros::package::getPath("iros18_vision")+H_file;
+        //FileStorage fs(H_file.c_str(), FileStorage::READ);
 
 	Mat offline_H;
-	fs["Homography"] >> offline_H;
+	//fs["Homography"] >> offline_H;
 
 
 	int loop_frequency = 10;
 	ros::Rate loop_rate(loop_frequency);	
 
-	ros::Publisher plan_pub = nh_.advertise<trajectory_msgs::JointTrajectory>("/plan",10);
+	//ros::Publisher plan_pub = nh_.advertise<trajectory_msgs::JointTrajectory>("/plan",10);
+	ros::Publisher filtered_traj_pub = nh_.advertise<pcl::PointCloud<pcl::PointXYZI> > ("/filtered_tissue_traj",1);
 	trajectory_msgs::JointTrajectory plan;
 	trajectory_msgs::JointTrajectoryPoint point;
 	for (int i = 0; i < 6; ++i){
@@ -59,6 +63,7 @@ int main(int argc, char * argv[]){
 	
 	// for now only processes the last data set in the file as with the start and stop data
 	int ctr = 0;
+	pcl::PointCloud<pcl::PointXYZI> filtered_output_traj;
 	while(getline(plan_file, line)){
 		istringstream iss(line);
 		
@@ -71,6 +76,12 @@ int main(int argc, char * argv[]){
 			// read the positions
 			for (int i = 0; i < 6; ++i)
 				iss >> point.positions[i];
+			pcl::PointXYZI xyzi;
+			xyzi.x = point.positions[0];
+			xyzi.y = point.positions[1];
+			xyzi.z = point.positions[2];
+			xyzi.intensity = 0;
+			filtered_output_traj.points.push_back(xyzi);
 			// read the velocities
 			for (int i = 0; i < 6; ++i)
 				iss >> point.velocities[i];
@@ -95,8 +106,13 @@ int main(int argc, char * argv[]){
 	}
 	
 	while(ros::ok()){
-		plan.header.stamp = ros::Time::now();
-		plan_pub.publish(plan);
+		//plan.header.stamp = ros::Time::now();
+		//plan_pub.publish(plan);
+		std_msgs::Header header;
+		header.stamp = ros::Time::now();
+		header.frame_id = std::string("world");
+		filtered_output_traj.header = pcl_conversions::toPCL(header);
+	 	filtered_traj_pub.publish(filtered_output_traj);
 		ros::spinOnce();
 		loop_rate.sleep();
 	}

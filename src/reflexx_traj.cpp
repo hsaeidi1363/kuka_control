@@ -43,6 +43,7 @@
 #include <geometry_msgs/Twist.h>
 #include<trajectory_msgs/JointTrajectory.h> 
 #include<std_msgs/UInt8.h>
+#include<std_msgs/Bool.h>
 
 #include <ReflexxesAPI.h>
 #include <RMLPositionFlags.h>
@@ -71,6 +72,7 @@
 trajectory_msgs::JointTrajectory plan;
 bool plan_available = false;
 bool rob_pos_received = false;
+bool reset_traj = false;
 int number_of_points = 0;
 
 
@@ -90,6 +92,11 @@ void get_plan(const trajectory_msgs::JointTrajectory & _data){
 
 void get_mode(const std_msgs::UInt8 & _data){
 	control_mode = _data.data;
+
+}
+
+void get_reset_traj(const std_msgs::Bool & _data){
+	reset_traj = _data.data;
 
 }
 
@@ -183,6 +190,8 @@ int main(int argc, char * argv[])
     ros::Subscriber plan_sub = nh_.subscribe("/plan",1,get_plan);
     ros::Subscriber pos_sub = nh_.subscribe("/robot/worldpos/" ,1, get_pos);
     ros::Subscriber control_mode_sub = nh_.subscribe("/iiwa/control_mode" ,1, get_mode);
+    ros::Subscriber reset_traj_sub = nh_.subscribe("/reset_auto_traj" ,1, get_reset_traj);
+
 
 
     geometry_msgs::Twist ref;
@@ -332,8 +341,9 @@ int main(int argc, char * argv[])
 				printf("An error occurred (%d).\n", ResultValue );
 				break;
 			}
-			if (ResultValue == ReflexxesAPI::RML_FINAL_STATE_REACHED && external_plan){
+			if ((ResultValue == ReflexxesAPI::RML_FINAL_STATE_REACHED || reset_traj) && external_plan){
 				//setting the target velcoity and positions
+				reset_traj = false;
 				int next_wp;
 				if(control_mode == 0)
 					next_wp = 1;
@@ -381,13 +391,16 @@ int main(int argc, char * argv[])
 			*IP->CurrentPositionVector      =   *OP->NewPositionVector      ;
 			*IP->CurrentVelocityVector      =   *OP->NewVelocityVector      ;
 			*IP->CurrentAccelerationVector  =   *OP->NewAccelerationVector  ;
-			ref.linear.x = IP->CurrentPositionVector->VecData[0];
-			ref.linear.y = IP->CurrentPositionVector->VecData[1];
-			ref.linear.z = IP->CurrentPositionVector->VecData[2];
-			ref.angular.x = IP->CurrentPositionVector->VecData[3];
-			ref.angular.y = IP->CurrentPositionVector->VecData[4];
-			ref.angular.z = IP->CurrentPositionVector->VecData[5];
-			
+			if(control_mode == 1){
+				ref = rob_pos;
+			}else{
+				ref.linear.x = IP->CurrentPositionVector->VecData[0];
+				ref.linear.y = IP->CurrentPositionVector->VecData[1];
+				ref.linear.z = IP->CurrentPositionVector->VecData[2];
+				ref.angular.x = IP->CurrentPositionVector->VecData[3];
+				ref.angular.y = IP->CurrentPositionVector->VecData[4];
+				ref.angular.z = IP->CurrentPositionVector->VecData[5];
+			}			
 			//dbg.angular.x = ctr;
 			reflexxes_pub.publish(ref);
 		
