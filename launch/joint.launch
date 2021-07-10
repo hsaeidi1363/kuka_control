@@ -19,10 +19,10 @@
 
 
 	</node>
-	<node name="plan" pkg="kuka_control" type="kuka_control_planning">
+	<!--node name="plan" pkg="kuka_control" type="kuka_control_planning">
 		<param name="plan_file_name" value="/trajs/plan8.txt"/>
 		<param name ="offline_homography" value = "false"/>
-	</node>	
+	</node-->	
     <node name="ref_genXYZ" pkg = "kuka_control" type="kuka_control_reflexx_traj">
 		<param name="external_plan" value = "true"/>
 	</node>

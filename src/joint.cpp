@@ -4,6 +4,7 @@
 #include<geometry_msgs/Twist.h>
 #include<iiwa_msgs/JointPosition.h>
 #include<sensor_msgs/JointState.h>
+#include <tf/transform_broadcaster.h>
 #include<kdl/chain.hpp>
 #include "Eigen/Core"
 #include <kdl/chainfksolver.hpp>
@@ -63,7 +64,7 @@ double needle_length = 0.0;
 
 KDL::Chain LWR(){
 
-  double tool_length = 0.504;//0.01735;
+  double tool_length = 0.506;//0.01735;
   double total_tool_length = tool_length + needle_length + 0.12597;//0.12597 m from joint to flange 
 
   KDL::Chain chain;
@@ -157,6 +158,16 @@ void eval_points(trajectory_msgs::JointTrajectoryPoint & _point, KDL::JntArray &
 	}	
 }
 
+// a quick code for checking the smoothness of commands
+void convert_to_fast(iiwa_msgs::JointPosition & _fast_cmd, trajectory_msgs::JointTrajectoryPoint & _point){
+	_fast_cmd.position.a1 = _point.positions[0];
+	_fast_cmd.position.a2 = _point.positions[1];
+	_fast_cmd.position.a3 = _point.positions[2];
+	_fast_cmd.position.a4 = _point.positions[3];
+	_fast_cmd.position.a5 = _point.positions[4];
+	_fast_cmd.position.a6 = _point.positions[5];
+	_fast_cmd.position.a7 = _point.positions[6];
+}
 // read the reference trajectory from the reflexxes node e.g. ref xyz-rpy
 bool ref_received= false;
 geometry_msgs::Twist ref;
@@ -191,6 +202,7 @@ int main(int argc, char * argv[]){
 
 	trajectory_msgs::JointTrajectory joint_cmd;
 	trajectory_msgs::JointTrajectoryPoint pt,pt2;
+	iiwa_msgs::JointPosition fast_joint_cmd;
 
 	initialize_points(pt,nj,0.0);
 	initialize_points(pt2,nj,0.0);
@@ -225,13 +237,17 @@ int main(int argc, char * argv[]){
 	float dt = (float) 1/loop_freq;
 	ros::Rate loop_rate(loop_freq);
 
-	
+	tf::TransformBroadcaster br;
 	// defining the publisher that accepts joint position commands and applies them to the simulator
-	std::string command_topic = "iiwa/PositionJointInterface_trajectory_controller/command";
+	//std::string command_topic = "iiwa/PositionJointInterface_trajectory_controller/command";
+	// based on the new topic direct access to robot commads 	
+	std::string command_topic = "/iiwa/command/JointPosition";
 	if(semi_auto)
 		command_topic = "iiwa/auto/command";
 	
-	ros::Publisher cmd_pub = nh_.advertise<trajectory_msgs::JointTrajectory>(command_topic,10);
+//	ros::Publisher cmd_pub = nh_.advertise<trajectory_msgs::JointTrajectory>(command_topic,10);
+	// based on the new topic direct access to robot commads 	
+	ros::Publisher cmd_pub = nh_.advertise<iiwa_msgs::JointPosition>(command_topic,10);
 
 
 	// debugging publishers
@@ -260,6 +276,7 @@ int main(int argc, char * argv[]){
 	// apply the manual joint commands read from the launch file
 	if (manual){
 		eval_points(pt, manual_joint_cmd, nj);	
+		convert_to_fast(fast_joint_cmd, pt);
 	}else{
 		cartpos.p[0]=x;
 		cartpos.p[1]=y;
@@ -283,6 +300,7 @@ int main(int argc, char * argv[]){
 		int ret = iksolver.CartToJnt(jointpositions,cartpos,jointpositions_new);
 		// get the target point ready after the inverse kinmatics is solved
 		eval_points(pt, jointpositions_new, nj);
+		convert_to_fast(fast_joint_cmd, pt);
 	}
 	// debugging variables
 	geometry_msgs::Twist xyz;
@@ -310,6 +328,7 @@ int main(int argc, char * argv[]){
 				cartpos.M = rpy;
 				int ret = iksolver.CartToJnt(jointpositions,cartpos,jointpositions_new);
 				eval_points(pt, jointpositions_new, nj);
+				convert_to_fast(fast_joint_cmd, pt);
 				pt.time_from_start = ros::Duration(dt);
 				joint_cmd.points[0] = pt;
 			}
@@ -323,9 +342,23 @@ int main(int argc, char * argv[]){
 				xyz.angular.x = roll;
 				xyz.angular.y = pitch;
 				xyz.angular.z = yaw;
+
+   			 	tf::Transform tool_in_world;
+				tf::Vector3 tf_pose;
+				tf::Quaternion tf_q;
+				tf_pose = tf::Vector3(cartpos.p[0], cartpos.p[1], cartpos.p[2]);
+				tf_q.setRPY(roll, pitch, yaw);
+				tool_in_world.setOrigin(tf_pose);
+				tool_in_world.setRotation(tf_q);
+				br.sendTransform(tf::StampedTransform(tool_in_world, ros::Time::now(), "kuka", "tool_tip"));	
+
 			}
-			joint_cmd.header.stamp = ros::Time::now();
-			cmd_pub.publish(joint_cmd);
+			//joint_cmd.header.stamp = ros::Time::now();
+			//cmd_pub.publish(joint_cmd);
+			fast_joint_cmd.header.stamp = ros::Time::now();
+			cmd_pub.publish(fast_joint_cmd);
+			// based on the new topic direct access to robot commads 	
+			
 			xyzrpy_pub.publish(xyz);			
 		}
 		loop_rate.sleep();
